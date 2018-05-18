@@ -45,12 +45,6 @@
       <button type="button" class="btn btn-sm btn-primary btn-leave">退出房间</button>
     </p>
 
-    <!-- <div class="checklist_item">
-      <input type="checkbox" id="checkbox-useflash-audio" class="regular-checkbox">
-      <label for="checkbox-useflash-audio"></label>
-      <span id="span-useflash-av">强制使用Flash</span>
-    </div> -->
-
     <!-- 播放音量控制条 -->
     <div class="as-panel .container-fluid">
       <input id="input-volume" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1"
@@ -125,13 +119,9 @@
       $("#localvideo").parent().remove();
       var html = $('<div class="well well-sm vid" style="width:160px"><div class="vctr"><i class="i1">开麦</i></div></div>');
       $("#audiolist").prepend(html);
-      /** 如果是webrtc流，使用video标签播放，如果flash的不需要创建Video标签，会自动播放 */
-      if (type === 0) {
-        var localvideo = rtc.createLocalVideoElement('localvideo', stream);
-        html.prepend(localvideo);
-      } else {
-        html.children()[0].id = "localvideo";
-      }
+      /** webrtc流，使用video标签播放*/
+      var localvideo = rtc.createLocalVideoElement('localvideo', stream);
+      html.prepend(localvideo);
       //============= 控制自己的麦克风开关 ==================
       html.find(".i1").click(function (e) {
         if ($(e.target).css('text-decoration').indexOf('line-through') < 0) {
@@ -156,13 +146,9 @@
       var html = $('<div class="well well-sm vid" style="width:160px"><div class="vctr"><i class="u"></i><i class="i1">收听</i></div></div>');
       $("#audiolist").append(html);
 
-      /** 如果是webrtc流，使用video标签播放, 如果是flash的不需要创建Video标签，会自动播放 */
-      if (type === 0) {
-        var video = rtc.createRemoteVideoElement('v_' + userid, stream);
-        html.prepend(video);
-      } else {
-        html.children()[0].id = 'v_' + userid;
-      }
+      /** webrtc流，使用video标签播放 */
+      var video = rtc.createRemoteVideoElement('v_' + userid, stream);
+      html.prepend(video);
 
       html.find(".u").text(userid);
       //============= 控制是否收听这个语音 ==================
@@ -220,9 +206,6 @@
       onReconnect: onReconnect,
       onReconnected: onReconnected
     };
-    var options = {
-      swfPath: "./out/RtmpStreamer.swf?n=123"
-    };
 
     $('.btn-login').click(function () {
       if (!rtc.getSupportType()) {
@@ -231,7 +214,7 @@
       }
       if (!join) {
         join = true;
-        rtc.init(listener, options);
+        rtc.init(listener, null);
       } else {
         alert('进频道中,请稍等');
       }
