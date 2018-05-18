@@ -1,4 +1,7 @@
 # 游密H5 RTC SDK
+
+[游密官网](https://www.youme.im/)
+
 ## SDK文件说明
 
 **必须的文件**
@@ -23,3 +26,6 @@ cd hyperRTC
 live-server --https=/usr/local/lib/node_modules/live-server-https
 
 ```
+## 技术支持交流群
+QQ群：`329145286`
+
