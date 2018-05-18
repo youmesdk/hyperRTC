@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="renderer" content="webkit">
+  <title>游密WebRTC</title>
+   <!-- demo页面依赖 -->
+  <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap-slider/10.0.2/css/bootstrap-slider.css">
+  <script src="https://lib.sinaapp.com/js/jquery/1.12.4/jquery-1.12.4.min.js"></script>
+  <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://cdn.bootcss.com/bootstrap-slider/10.0.2/bootstrap-slider.min.js"></script>
+  <script type="text/javascript" src="./out/crypto-js.js"></script>
+
+  <!-- SDK，导入项目时仅需引入该文件 -->
+  <script type="text/javascript" src="./out/ymrtc.js?n=135"></script>
+  <style>
+    .vctr i {background-color: rgba(0, 0, 0, 0.5);color: #fff;display: inline-block;padding: 2pt 6pt;margin: 0 0 0 5pt;opacity: 0.99;font-style: normal;}
+    .vid {display: inline-block;margin-right: 4pt;}
+    .vid video {width: 120px;display: none;}
+    #ex1Slider .slider-selection {background: #BABABA;}
+  </style>
+</head>
+
+<body>
+  <div class="container theme-showcase" role="main">
+    <div class="page-header">
+      <h3>游密实纯音频模式</h3>
+    </div>
+
+    <div id="textDiv"></div>
+
+    <br/>
+    <div id="textDiv">房间号:</div>
+    <input id="room-input" type="text" name="房间号:" value="123880" />
+    <div id="textDiv">用户名:</div>
+    <input id="user-input" type="text" name="用户名:" value="123" />
+
+    <br/>
+    <br/>
+    <p>
+      <button type="button" class="btn btn-sm btn-primary btn-login">进频道</button>
+      <button type="button" class="btn btn-sm btn-primary btn-publish">开始推流</button>
+      <button type="button" class="btn btn-sm btn-primary btn-leave">退出房间</button>
+    </p>
+
+    <!-- <div class="checklist_item">
+      <input type="checkbox" id="checkbox-useflash-audio" class="regular-checkbox">
+      <label for="checkbox-useflash-audio"></label>
+      <span id="span-useflash-av">强制使用Flash</span>
+    </div> -->
+
+    <!-- 播放音量控制条 -->
+    <div class="as-panel .container-fluid">
+      <input id="input-volume" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1"
+        data-slider-value="100" />
+    </div>
+
+    <!-- 显示通话用户列表 -->
+    <div class="as-panel .container-fluid">
+      <div class="list-group as-content" id="audiolist">
+
+      </div>
+    </div>
+
+    <div class="col-sm-4 demolog">
+      <!-- log -->
+    </div>
+  </div>
+  <script type="text/javascript">
+    // =============== 配置和获取游密语音sdk对象 =================
+    var APPKEY = "YOUME00AD8574CEB27E309DBBEA4A3BA29B6A2FB804CB";
+    // 实际使用时，API KEY只需要放到服务器端，用于token计算
+    var APIKEY = "57cb1ba285b54bee318fe2e1d3db83e4";
+    var rtc = YMSDK.ymrtc.Instance;
+    rtc.setLogLevel(40);
+    rtc.setMode(0);
+    // =============== End 配置和获取游密语音sdk对象 ==============
+
+    // ==================== Token 计算演示 ======================
+    function genToken(appkey, apikey, userid) {
+      var sha1src = appkey + apikey + userid;
+      var token = CryptoJS.SHA1(sha1src).toString(CryptoJS.enc.Hex);
+      return token;
+    }
+    // ==================== End Token 计算演示 ==================
+    
+    // ====================== UI 初始化处理 ======================
+    var publishing = false;
+    var join = false;
+    $('#user-input').val( Math.floor(Math.random() * 1000000) );
+    var userstatus = $("#textDiv");
+    userstatus.text("用户名：" + document.getElementById('user-input').value);
+    $('.btn-publish').hide();
+    $('.btn-leave').hide();
+    $('.btn-volume').hide();
+
+    // ==================== 通话事件回调的处理 =====================
+    function onInitResult(result, message) {
+      // Demo 在初始化成功后立即调用 joinRoom 进入频道
+      log("onInitResult: " + result + " message:" + message);
+      if (result == 0) {
+        var roomid = document.getElementById('room-input').value;
+        rtc.joinRoom({ 
+          appkey: APPKEY, 
+          token: genToken(APPKEY, APIKEY, document.getElementById('user-input').value), 
+          roomid: roomid, 
+          userid: document.getElementById('user-input').value 
+        }, function (result, msg) {
+          join = false;
+          if (result !== 0) {
+            log("进频道失败, msg:", msg);
+            userstatus.text("用户名：" + document.getElementById('user-input').value + " 进频道失败 result:" + result);
+          } else {
+            joined();
+          }
+        });
+      }
+    }
+
+    function onLocalStreamAdd(type, stream) {
+      log("onLocalStreamAdd", "type:", type + " stream:", stream);
+
+      $("#localvideo").parent().remove();
+      var html = $('<div class="well well-sm vid" style="width:160px"><div class="vctr"><i class="i1">开麦</i></div></div>');
+      $("#audiolist").prepend(html);
+      /** 如果是webrtc流，使用video标签播放，如果flash的不需要创建Video标签，会自动播放 */
+      if (type === 0) {
+        var localvideo = rtc.createLocalVideoElement('localvideo', stream);
+        html.prepend(localvideo);
+      } else {
+        html.children()[0].id = "localvideo";
+      }
+      //============= 控制自己的麦克风开关 ==================
+      html.find(".i1").click(function (e) {
+        if ($(e.target).css('text-decoration').indexOf('line-through') < 0) {
+          rtc.closeMic();
+          $(e.target).css('text-decoration', 'line-through');
+        } else {
+          rtc.openMic();
+          $(e.target).css('text-decoration', 'none');
+        }
+      });
+    }
+
+    function onRemoteStreamAdd(userid, type, stream) {
+      log("onRemoteStreamAdd: userid", userid, " type:", type, " stream:", stream);
+
+      var oldVideo = $('#v_' + userid);
+      if (oldVideo.length > 0) {
+        oldVideo.parent().remove();
+      }
+
+      log("a new video element");
+      var html = $('<div class="well well-sm vid" style="width:160px"><div class="vctr"><i class="u"></i><i class="i1">收听</i></div></div>');
+      $("#audiolist").append(html);
+
+      /** 如果是webrtc流，使用video标签播放, 如果是flash的不需要创建Video标签，会自动播放 */
+      if (type === 0) {
+        var video = rtc.createRemoteVideoElement('v_' + userid, stream);
+        html.prepend(video);
+      } else {
+        html.children()[0].id = 'v_' + userid;
+      }
+
+      html.find(".u").text(userid);
+      //============= 控制是否收听这个语音 ==================
+      html.find(".i1").click(function (e) {
+        if ($(e.target).css('text-decoration').indexOf('line-through') < 0) {
+          rtc.setRemoteAudioEnable(userid, false, video);
+          $(e.target).css('text-decoration', 'line-through');
+        } else {
+          rtc.setRemoteAudioEnable(userid, true, video);
+          $(e.target).css('text-decoration', 'none');
+        }
+      });
+
+    }
+
+    function onRemoteStreamRemove(userid) {
+      log("onRemoteStreamRemove: userid", userid);
+      var video = $('#v_' + userid);
+      if (video.length > 0) {
+        if (video[0].pause) video[0].pause();
+        video.parent().remove();
+      }
+    }
+
+    function onKickout() {
+      log("onKickout");
+      userstatus.text("用户名：" + document.getElementById('user-input').value + " 被踢出");
+      leaved();
+    }
+
+    function onWebSocketClose() {
+      log("onWebSocketClose");
+      userstatus.text("用户名：" + document.getElementById('user-input').value + " 断开连接");
+      leaved();
+    }
+
+    function onReconnect() {
+      log("发生网络重连");
+      stopPublish();
+      $('.btn-publish').hide();
+    }
+
+    function onReconnected() {
+      log("重连成功，由于设备权限问题，需要手动点击按钮重新启动自己的推流");
+      $('.btn-publish').show();
+    }
+
+    var listener = {
+      onInitResult: onInitResult,
+      onLocalStreamAdd: onLocalStreamAdd,
+      onRemoteStreamAdd: onRemoteStreamAdd,
+      onRemoteStreamRemove: onRemoteStreamRemove,
+      onKickout: onKickout,
+      onWebSocketClose: onWebSocketClose,
+      onReconnect: onReconnect,
+      onReconnected: onReconnected
+    };
+    var options = {
+      swfPath: "./out/RtmpStreamer.swf?n=123"
+    };
+
+    $('.btn-login').click(function () {
+      if (!rtc.getSupportType()) {
+        alert('当前浏览器环境不支持实时音视频通话');
+        return;
+      }
+      if (!join) {
+        join = true;
+        rtc.init(listener, options);
+      } else {
+        alert('进频道中,请稍等');
+      }
+    });
+
+    $('.btn-leave').click(function () {
+      rtc.leaveRoom();
+      leaved();
+    });
+
+    $('.btn-volume').click(function () {
+      var videolist = $('video');
+      var videos = [];
+      for (i = 0; i < videolist.length; i++) {
+        videos.push(videolist[i]);
+      }
+      rtc.setAllUserPlaybackVolume(document.getElementById('input-volume').value, videos);
+    });
+
+    $('.btn-publish').click(function () {
+      if (publishing) {
+        stopPublish();
+      } else {
+        $('.btn-publish').hide();
+        startPublish();
+      }
+    });
+    function stopPublish() {
+      publishing = false;
+      manualStoped = true;
+      rtc.stopPublish(function (result) {
+        $('#localvideo').parent().remove();
+        $('.btn-publish').text('开始推流');
+      });
+    }
+    function startPublish() {
+      rtc.startPublish({
+        audio: true, video: false
+      }, function (result) {
+        if (result !== 0) {
+          publishing = false;
+          var errorStr = "";
+          if (result === -10007) {
+            errorStr = "数据通道创建失败";
+          } else if (result === -10008) {
+            errorStr = "获取设备权限失败";
+          } else if (result === -10009) {
+            errorStr = "SDP生成失败";
+          } else {
+            errorStr = "start publish fail with code:" + result;
+          }
+          alert(errorStr);
+        } else {
+          publishing = true;
+          $('.btn-publish').text('停止推流');
+          $('.btn-publish').show();
+        }
+      });
+    }
+
+    function joined(){
+      //进入频道成功的UI处理
+      log("进频道成功");
+      $('.btn-login').hide();
+      $('.btn-publish').show();
+      $('.btn-leave').show();
+      $('.btn-volume').show();
+      userstatus.text("用户名：" + document.getElementById('user-input').value + " 进频道成功");
+      $('#ex1Slider').show();
+    }
+
+    function leaved() {
+      //退出频道时UI重置
+      join = false;
+      $('.btn-login').show();
+      $('.btn-publish').hide();
+      $('.btn-leave').hide();
+      $('.btn-publish').text('开始推流');
+      $('.btn-volume').hide();
+      document.getElementById('input-volume').hide = true;
+      publishing = false;
+      $(".vid").remove();
+      userstatus.text("用户名：" + document.getElementById('user-input').value + " 退出频道");
+    }
+
+    // 音量控制条
+    var volSlider = $('#input-volume').slider({
+      formatter: function (value) {
+        return '播放音量: ' + value;
+      }
+    }).on('slide', function (e) {
+      rtc.setAllUserPlaybackVolume(e.value / 100, $('video').toArray());
+    });
+
+    $('#ex1Slider').hide();
+
+    function log(msg) {
+      $(".demolog").html($(".demolog").html() + "<br>" + msg);
+    }
+  </script>
+</body>
+
+</html>
