@@ -26,7 +26,7 @@ https://wxtest3.youme.im/index.html
 
 ## 时序图
 
-https://www.youme.im/doc/images/h5_video_sdk_order.jpg
+![时序图](https://www.youme.im/doc/images/h5_video_sdk_order.jpg)
 
 
 ## 接口列表
