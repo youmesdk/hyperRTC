@@ -22,10 +22,10 @@
 操作系统平台 |浏览器/webview|版本要求|备注
 -------|------|------|------
 iOS|Safari(Only)|11.1.2|微信浏览器不支持
-Android|4.4 (KitKat)、TBS	43600、微信/手Q | |
-Android|Android	Chrome 60+ | |
-Mac|Safari 11+、Chrome 内核	47+、Firefox 57+| |
-Windows(PC)|Chrome	47+、Firefox 57+、IE+Flash、Edge| |
+Android|4.4 (KitKat)、微信/手Q | TBS	43600 |
+Android|Android	Chrome 60+ | 60+ |
+Mac|Safari 11+、Chrome 内核	47+、Firefox 57+| * |
+Windows(PC)|Chrome	47+、Firefox 57+、IE+Flash、Edge| * |
 
 ## DEMO 运行说明
  由于浏览器的安全显示，测试时需要把 Demo 页面放到 https 域名下运行，本地测试可以使用如下命令快速搭建一个https环境：
