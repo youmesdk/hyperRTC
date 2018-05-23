@@ -14,7 +14,8 @@
 - `out/RtmpStreamer.swf` 如果要兼容flash插件环境（比如IE浏览器），需要在初始化时传入该文件的URL
 
 **Demo**
-- `index.html` 是Demo页面，演示语音通话的效果，放到 https 服务器上再访问即可
+- `index.html` 是音频Demo页面，演示语音通话的效果，放到 https 服务器上再访问即可
+- `index_av.html` 是视频Demo页面，演示视频通话的效果，放到 https 服务器上再访问即可
 - `crypto-js.js` 演示用户token计算时用到的加密库
 
 ## DEMO 运行说明
