@@ -22,7 +22,7 @@
 
 操作系统平台 |浏览器/webview|版本要求|备注
 -------|------|------|------
-iOS|Safari(Only)|11.1.2|微信浏览器不支持
+iOS|Safari(Only)|11.1.2| app内置WebView不支持
 Android|4.4 (KitKat)、微信/手Q | TBS	43600 |
 Android|Android	Chrome 60+ | 60+ |
 Mac|Safari 11+、Chrome 内核	47+、Firefox 57+| * |
