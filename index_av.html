@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="renderer" content="webkit">
+  <title>游密WebRTC</title>
+   <!-- demo页面依赖 -->
+   <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap-slider/10.0.2/css/bootstrap-slider.css">
+   <script src="https://lib.sinaapp.com/js/jquery/1.12.4/jquery-1.12.4.min.js"></script>
+   <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+   <script src="https://cdn.bootcss.com/bootstrap-slider/10.0.2/bootstrap-slider.min.js"></script>
+   <script type="text/javascript" src="./out/crypto-js.js"></script>
+ 
+   <!-- SDK，导入项目时仅需引入该文件 -->
+   <script type="text/javascript" src="./out/ymrtc.js?n=135"></script>
+  <style>
+    .vctr {
+      margin: -24pt 0 0 0;
+      /* float: right; */
+    }
+
+    .vctr i {
+      background-color: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      display: inline-block;
+      padding: 2pt 6pt;
+      margin: 0 0 0 5pt;
+      opacity: 0.99;
+      font-style: normal;
+    }
+
+    .vid video{
+      width: 320px;
+    }
+    #ex1Slider .slider-selection {
+      background: #BABABA;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container theme-showcase" role="main">
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="page-header">
+      <h3>游密实时视频Demo</h3> <a href="index.html">切换到音频通话Demo</a>
+    </div>
+
+
+    <div id="textDiv"></div>
+
+    <br/>
+    <div id="textDiv">房间号:</div>
+    <input id="room-input" type="text" name="房间号:" value="123880"/>
+    <div id="textDiv">用户名:</div>
+    <input id="user-input" type="text" name="用户名:" value="123"/>
+
+    <br/>
+    <br/>
+    <p>
+      <button type="button" class="btn btn-sm btn-primary btn-login">进频道</button>
+      <button type="button" class="btn btn-sm btn-primary btn-publish">开始推流</button>
+      <button type="button" class="btn btn-sm btn-primary btn-leave">退出房间</button>
+    </p>
+
+    <!-- <div class="checklist_item">
+      <input type="checkbox" id="checkbox-useflash-av" class="regular-checkbox">
+      <label for="checkbox-useflash-av"></label>
+      <span id="span-useflash-av">强制使用Flash</span>
+    </div> -->
+
+    <div class="as-panel .container-fluid">
+        <input id="input-volume" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="100"/>
+    </div>
+
+
+    <div class="as-panel .container-fluid">
+      <div class="list-group as-content" id="videolist">
+
+      </div>
+    </div>
+
+    <div class="col-sm-4 demolog">
+      <!-- log -->
+    </div>
+  </div>
+  <!-- /.modal -->
+  <!-- js -->
+  <script type="text/javascript">
+    // =============== 配置和获取游密语音sdk对象 =================
+    var APPKEY = "YOUME00AD8574CEB27E309DBBEA4A3BA29B6A2FB804CB";
+    // 实际使用时，API KEY只需要放到服务器端，用于token计算
+    var APIKEY = "57cb1ba285b54bee318fe2e1d3db83e4";
+    var rtc = YMSDK.ymrtc.Instance;
+    rtc.setLogLevel(40);
+    rtc.setMode(1); //设置为视频通话模式
+    var options = {
+      // 兼容IE + flash，不需要兼容flash插件，就不用设置该字段, Beta状态
+      swfPath: "./out/RtmpStreamer.swf?n=123"
+    };
+    // =============== End 配置和获取游密语音sdk对象 ==============
+
+    // ==================== Token 计算演示 ======================
+    function genToken(appkey, apikey, userid) {
+      var sha1src = appkey + apikey + userid;
+      var token = CryptoJS.SHA1(sha1src).toString(CryptoJS.enc.Hex);
+      return token;
+    }
+    // ==================== End Token 计算演示 ==================
+
+    var publishing = false;
+    var join = false;
+
+    document.getElementById('user-input').value = Math.floor(Math.random() * 1000000) + "";
+
+    var userstatus = $("#textDiv");
+    var flashUserlist = new Set();
+    userstatus.text("用户名：" + document.getElementById('user-input').value);
+    $('.btn-publish').hide();
+    $('.btn-leave').hide();
+    $('.btn-volume').hide();
+    
+    function onInitResult(result, message) {
+      log("onInitResult: "+ result + " message:"+ message);
+      if (result == 0) {
+        var roomid = document.getElementById('room-input').value;
+        rtc.joinRoom({ appkey:APPKEY, token:genToken(APPKEY, APIKEY, document.getElementById('user-input').value), roomid:roomid, userid: document.getElementById('user-input').value }, function (result, msg) {
+          join = false;
+          if (result !== 0) {
+            log("进频道失败, msg:", msg);
+            userstatus.text("用户名：" + document.getElementById('user-input').value + " 进频道失败 result:" + result);
+          } else {
+            log("进频道成功");
+            $('.btn-login').hide();
+            $('.btn-publish').show();
+            $('.btn-leave').show();
+            $('.btn-volume').show();
+            $('#ex1Slider').show();
+            userstatus.text("用户名：" + document.getElementById('user-input').value + " 进频道成功");
+          }
+        });
+      }
+    }
+
+    function onLocalStreamAdd(type, stream) {
+      log("onLocalStreamAdd", "type:", type + " stream:", stream);
+      if (type == 1) {
+        flashUserlist.add(document.getElementById('user-input').value);
+        refreshFlashScreen();
+        return;
+      }
+      $("#localvideo").parent().remove();
+      var html = $('<div class="well well-sm vid" style="width:340px"><div class="vctr"><i class="i1">开麦</i><i class="i">开摄</i></div></div>');
+      $("#videolist").prepend(html);
+      var localvideo = rtc.createLocalVideoElement('localvideo',stream);
+      html.prepend(localvideo);
+      html.find(".i1").click(function (e) {
+        if ($(e.target).css('text-decoration').indexOf('line-through') < 0) {
+          rtc.closeMic();
+          $(e.target).css('text-decoration', 'line-through');
+        } else {
+          rtc.openMic();
+          $(e.target).css('text-decoration', 'none');
+        }
+      });
+      html.find(".i").click(function (e) {
+        if ($(e.target).css('text-decoration').indexOf('line-through') < 0) {
+          rtc.closeCamera();
+          $(e.target).css('text-decoration', 'line-through');
+        } else {
+          localvideo.play();
+          rtc.openCamera();
+          $(e.target).css('text-decoration', 'none');
+        }
+      });
+    }
+
+    function onRemoteStreamAdd(userid, type, stream) {
+      log("onRemoteStreamAdd: userid", userid, " type:", type, " stream:", stream);
+      if (type == 1) {
+        flashUserlist.add(userid);
+        refreshFlashScreen();
+        return;
+      }
+      var oldVideo = $('#v_'+userid);
+      if (oldVideo.length>0) {
+        log("reuse video element");
+        oldVideo[0].pause();
+        oldVideo[0].srcObject = stream;
+        oldVideo[0].play();
+      } else {
+        log("a new video element");
+        var html = $('<div class="well well-sm vid" style="width:340px"><div class="vctr"><i class="u"></i><i class="i1">听</i><i class="i">看</i></div></div>');
+        $("#videolist").append(html);
+        
+        var video = rtc.createRemoteVideoElement('v_'+userid,stream);
+        
+        html.prepend(video);
+        
+        html.find(".u").text(userid);
+        html.find(".i1").click(function (e) {
+          if ($(e.target).css('text-decoration').indexOf('line-through') < 0) {
+            rtc.setRemoteAudioEnable(userid, false, video);
+            $(e.target).css('text-decoration', 'line-through');
+          } else {
+            rtc.setRemoteAudioEnable(userid, true, video);
+            $(e.target).css('text-decoration', 'none');
+          }
+        });
+        html.find(".i").click(function (e) {
+          if ($(e.target).css('text-decoration').indexOf('line-through') < 0) {
+            $(video).css("visibility", 'hidden');
+            rtc.setRemoteVideoEnable(userid, false,video);
+            $(e.target).css('text-decoration', 'line-through');
+          } else {
+            rtc.setRemoteVideoEnable(userid, true,video);
+            $(video).css("visibility", 'visible');
+            $(e.target).css('text-decoration', 'none');
+          }
+        });
+      }
+    }
+
+    function onRemoteStreamRemove(userid) {
+      log("onRemoteStreamRemove: userid", userid);
+      flashUserlist.delete(userid);
+      refreshFlashScreen();
+      var video = $('#v_'+userid);
+      if (video.length >0 ) {
+        video[0].pause();
+        video.parent().remove();
+      }
+    }
+
+    function onKickout() {
+      log("onKickout");
+      userstatus.text("用户名：" + document.getElementById('user-input').value + " 被踢出");
+      leaved();
+    }
+
+    function onWebSocketClose() {
+      log("onWebSocketClose");
+      userstatus.text("用户名：" + document.getElementById('user-input').value + " 断开连接");
+      leaved();
+    }
+
+    function onReconnect(){
+      log("发生网络重连");
+      stopPublish();
+      $('.btn-publish').hide();
+    }
+
+    function onReconnected(){
+      log("重连成功，需要手动重新启动自己的推流");
+      $('.btn-publish').show();
+    }
+
+    var listener = {
+      onInitResult: onInitResult,
+      onLocalStreamAdd: onLocalStreamAdd,
+      onRemoteStreamAdd: onRemoteStreamAdd,
+      onRemoteStreamRemove: onRemoteStreamRemove,
+      onKickout: onKickout,
+      onWebSocketClose: onWebSocketClose,
+      onReconnect: onReconnect,
+      onReconnected: onReconnected
+    };
+    
+
+    $('.btn-login').click(function () {
+      if(!join){
+        join = true;
+        rtc.init(listener, options);
+      }else{
+        alert('进频道中,请稍等');
+      }
+    });
+
+    $('.btn-leave').click(function () {
+      rtc.leaveRoom();
+      leaved();
+    });
+
+    $('.btn-publish').click(function () {
+      if(publishing){
+        stopPublish();
+      }else{
+        $('.btn-publish').hide();
+        startPublish();
+      }
+    });
+    function stopPublish(){
+      publishing = false;
+        manualStoped = true;
+        rtc.stopPublish(function(result){
+          $('#localvideo').parent().remove();
+          $('.btn-publish').text('开始推流');
+        });
+    }
+    function startPublish(){
+      rtc.startPublish({
+          audio: true,  video: {
+            width: navigator.userAgent.indexOf("Mobile")>-1 ? 480 : 320,
+            frameRate: 15
+          }
+        }, function (result) {
+          if (result !== 0) {
+            publishing = false;
+            var errorStr = "";
+            if (result === -10007) {
+              errorStr = "PeerConnection 创建失败";
+            } else if (result === -10008) {
+              errorStr = "getUserMedia 失败";
+            } else if (result === -10009) {
+              errorStr = "getLocalSdp 失败";
+            } else {
+              errorStr = "start publish fail with code:"+result;
+            }
+            alert(errorStr);
+          } else {
+            publishing = true;
+            $('.btn-publish').text('停止推流');
+            $('.btn-publish').show();
+          }
+        });
+    }
+
+    function leaved(){
+      join = false;
+      $('.btn-login').show();
+      $('.btn-publish').hide();
+      $('.btn-leave').hide();
+      $('.btn-volume').hide();
+      document.getElementById('input-volume').hide = true;
+      $('.btn-publish').text('开始推流');
+      publishing = false;
+      $(".vid").remove();
+      userstatus.text("用户名：" + document.getElementById('user-input').value + " 退出频道");
+    }
+    // 音量控制条
+    var volSlider = $('#input-volume').slider({
+      formatter: function(value) {
+        return '播放音量: ' + value;
+      }
+    }).on('slide', function(e){
+      rtc.setAllUserPlaybackVolume(e.value /100, $('video').toArray());
+    });
+
+    $('#ex1Slider').hide();
+    
+    function log(msg){
+      $(".demolog").html( $(".demolog").html()+ "<br>"+msg);
+    }
+
+    function refreshFlashScreen() {
+      var index = 0;
+      flashUserlist.forEach( function (element, sameElement, set) {
+        switch(index) {
+          case 0:
+            rtc.setFlashVideoScreenOptions(element, {width:320,height:240,x:0,y:0});
+          break;
+          case 1:
+            rtc.setFlashVideoScreenOptions(element, {width:320,height:240,x:320,y:0});
+          break;
+          case 2:
+            rtc.setFlashVideoScreenOptions(element, {width:320,height:240,x:0,y:240});
+          break;
+          case 3:
+            rtc.setFlashVideoScreenOptions(element, {width:320,height:240,x:320,y:240});
+          break;
+          default:
+          break;
+        }
+        index++;
+      });
+    }
+  </script>
+</body>
+
+</html>

@@ -26,7 +26,7 @@ https://wxtest3.youme.im/index.html
 
 ## 时序图
 
-![时序图](https://www.youme.im/doc/images/h5_video_sdk_order.jpg)
+https://www.youme.im/doc/images/h5_video_sdk_order.jpg
 
 
 ## 接口列表
@@ -124,7 +124,8 @@ onReconnected|function|重连成功，需要手动重新启动自己的推流
 > ```
 >
 >	处理stream:
->
+> 
+>``` javascript
 >    function onLocalStreamAdd(type, stream) {
 >      /** 如果是webrtc流，使用video标签播放，如果flash的不需要创建Video标签，会自动播放 */
 >      if (type === 0) {
@@ -133,7 +134,7 @@ onReconnected|function|重连成功，需要手动重新启动自己的推流
 >      } else {
 >
 >      }
->
+>```
 
  **listener.onRemoteStreamAdd( userid, type, stream )**
 
@@ -153,7 +154,8 @@ onReconnected|function|重连成功，需要手动重新启动自己的推流
 > ```
 >
 >	处理stream:
->
+> 
+>``` javascript
 >    function onLocalStreamAdd(type, stream) {
 >      /** 如果是webrtc流，使用video标签播放, 如果是flash的不需要创建Video标签，会自动播放 */
 >      if (type === 0) {
@@ -162,11 +164,11 @@ onReconnected|function|重连成功，需要手动重新启动自己的推流
 >      } else {
 >
 >      }
->
+>```
 
  **listener.onRemoteStreamRemove( userid )**
 
->远端音视频流断开
+>远端音视频流断开 ，手动该回调可以移除对应 userid 的 H5 Video 标签。
 >
 >``` javascript
 >function onRemoteStreamRemove( userid ) {
