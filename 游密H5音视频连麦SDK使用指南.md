@@ -129,10 +129,11 @@ onReconnected|function|重连成功，需要手动重新启动自己的推流
 >    function onLocalStreamAdd(type, stream) {
 >      /** 如果是webrtc流，使用video标签播放，如果flash的不需要创建Video标签，会自动播放 */
 >      if (type === 0) {
+>		 // webrtc流
 >        var localvideo = rtc.createLocalVideoElement('localvideo', stream);
 >        document.body.appendChild(localvideo);
 >      } else {
->
+>		 // flash流
 >      }
 >```
 
@@ -156,13 +157,14 @@ onReconnected|function|重连成功，需要手动重新启动自己的推流
 >	处理stream:
 > 
 >``` javascript
->    function onLocalStreamAdd(type, stream) {
+>    function onRemoteStreamAdd( userid, type, stream ) {
 >      /** 如果是webrtc流，使用video标签播放, 如果是flash的不需要创建Video标签，会自动播放 */
 >      if (type === 0) {
+>		 // webrtc流
 >        var video = rtc.createRemoteVideoElement('v_' + userid, stream);
 >        document.body.appendChild(video);
 >      } else {
->
+>		 // flash流
 >      }
 >```
 

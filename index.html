@@ -14,7 +14,7 @@
   <script type="text/javascript" src="./out/crypto-js.js"></script>
 
   <!-- SDK，导入项目时仅需引入该文件 -->
-  <script type="text/javascript" src="./out/ymrtc.js?n=135"></script>
+  <script type="text/javascript" src="./out/ymrtc.js?n=135003"></script>
   <style>
     .vctr i {background-color: rgba(0, 0, 0, 0.5);color: #fff;display: inline-block;padding: 2pt 6pt;margin: 0 0 0 5pt;opacity: 0.99;font-style: normal;}
     .vid {display: inline-block;margin-right: 4pt;}
@@ -69,6 +69,8 @@
     </div>
   </div>
   <script type="text/javascript">
+    window.onerror = function(message, source, lineno, colno, error) { alert(message)}
+
     // =============== 配置和获取游密语音sdk对象 =================
     var APPKEY = "YOUME00AD8574CEB27E309DBBEA4A3BA29B6A2FB804CB";
     var APIKEY = "57cb1ba285b54bee318fe2e1d3db83e4"; // 实际使用时，API KEY只需要放到服务器端，用于token计算
@@ -119,6 +121,9 @@
             joined();
           }
         });
+      }else{
+        alert('init fail:'+message);
+        join = false;
       }
     }
 

@@ -15,7 +15,7 @@
    <script type="text/javascript" src="./out/crypto-js.js"></script>
  
    <!-- SDK，导入项目时仅需引入该文件 -->
-   <script type="text/javascript" src="./out/ymrtc.js?n=135"></script>
+   <script type="text/javascript" src="./out/ymrtc.js?n=135003"></script>
   <style>
     .vctr {
       margin: -24pt 0 0 0;
@@ -54,7 +54,7 @@
 
     <br/>
     <div id="textDiv">房间号:</div>
-    <input id="room-input" type="text" name="房间号:" value="123880"/>
+    <input id="room-input" type="text" name="房间号:" value="0418"/>
     <div id="textDiv">用户名:</div>
     <input id="user-input" type="text" name="用户名:" value="123"/>
 
@@ -90,6 +90,8 @@
   <!-- /.modal -->
   <!-- js -->
   <script type="text/javascript">
+    window.onerror = function(message, source, lineno, colno, error) { alert(message)}
+
     // =============== 配置和获取游密语音sdk对象 =================
     var APPKEY = "YOUME00AD8574CEB27E309DBBEA4A3BA29B6A2FB804CB";
     // 实际使用时，API KEY只需要放到服务器端，用于token计算
@@ -142,6 +144,9 @@
             userstatus.text("用户名：" + document.getElementById('user-input').value + " 进频道成功");
           }
         });
+      }else{
+        alert('init fail:'+message);
+        join = false;
       }
     }
 
@@ -303,8 +308,8 @@
     function startPublish(){
       rtc.startPublish({
           audio: true,  video: {
-            width: navigator.userAgent.indexOf("Mobile")>-1 ? 480 : 320,
-            frameRate: 15
+            width: navigator.userAgent.indexOf("Mobile")>-1 ? 640 : 320,
+            frameRate: 25
           }
         }, function (result) {
           if (result !== 0) {
