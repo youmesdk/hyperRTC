@@ -33,11 +33,11 @@ Windows(PC)|Chrome	47+、Firefox 57+、IE+Flash、Edge| * |
  `以下示例代码依赖NodeJs，请先安装NodeJs后再运行如下命令`
 
 ``` shell
-npm install -g live-server 
-npm install -g live-server-https
 git clone https://github.com/youmesdk/hyperRTC
 cd hyperRTC
-live-server --https=/usr/local/lib/node_modules/live-server-https
+npm install -g live-server 
+npm install live-server-https
+live-server --https=./node_modules/live-server-https
 
 ```
 ## 技术支持交流群
